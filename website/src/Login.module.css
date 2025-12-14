@@ -85,6 +85,7 @@
     background-color: #f8fdff;
     transition: all 0.3s ease;
     box-sizing: border-box; /* Ensures padding doesn't break width */
+    color: #333333;
 }
 
 .input:focus {
