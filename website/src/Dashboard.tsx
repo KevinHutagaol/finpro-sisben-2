@@ -1,8 +1,8 @@
 import { signOut } from "firebase/auth";
 import { ref, set } from "firebase/database";
-import { useObject } from "react-firebase-hooks/database"
-import { auth, db } from "./firebase.ts"
-
+import { useObject } from "react-firebase-hooks/database";
+import { auth, db } from "./firebase"; // Removed .ts
+import styles from "./Dashboard.module.css";
 
 type DeviceControl = {
     set_lock: boolean;
@@ -17,130 +17,146 @@ type DeviceStatus = {
 type DeviceData = {
     control: DeviceControl;
     status: DeviceStatus;
+    online: boolean;
 }
 
 export default function Dashboard() {
-    const [snaphot, loading, error] = useObject(ref(db, "device_001"));
+    // 1. Fetch data
+    const [snapshot, loading, error] = useObject(ref(db, "device_001"));
 
+    // 2. Handle Loading/Error
     if (loading) {
-        return (
-            <h1>Loading...</h1>
-        )
+        return <div className={styles.centerMessage}><h2>Connecting to ESP32...</h2></div>
     }
 
     if (error) {
-        return (
-            <h1>Error: {error.message}</h1>
-        )
+        return <div className={styles.centerMessage}><h2>Error: {error.message}</h2></div>
     }
 
-    const deviceData = snaphot?.val() as DeviceData | null;
+    // 3. Process Data safely
+    const deviceData = snapshot?.val() as DeviceData | null;
+
     const status = deviceData?.status || {
         is_locked: false,
         door_closed: false,
         alarm_triggered: false,
     };
+
     const control = deviceData?.control || {
         set_lock: false,
     };
 
+    // New: Handle Online Status (default to false if data missing)
+    const isOnline = deviceData?.online ?? false;
+
     const toggleLock = () => {
         set(ref(db, "device_001/control/set_lock"), !control.set_lock)
             .then(() => {})
+            .catch((err) => alert(err.message));
     }
 
-    const isDoorOpen = status.door_closed === false
-
+    const isDoorOpen = !status.door_closed;
 
     return (
-        <div style={{padding: "20px", fontFamily: "sans-serif"}}>
-            <header style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                <h2>Device Control: 001</h2>
-                <button onClick={() => signOut(auth)}>Log Out</button>
-            </header>
+        <div className={styles.container}>
+            <div className={styles.dashboardCard}>
 
-            <hr/>
+                {/* Header Section */}
+                <header className={styles.header}>
+                    <div className={styles.titleGroup}>
+                        <h2 className={styles.title}>Device Control: 001</h2>
 
-            <div style={{display: "flex", gap: "20px", marginBottom: "30px"}}>
-                <StatusIndicator
-                    label="Lock Status"
-                    isActive={status.is_locked}
-                    activeColor="green"
-                    inactiveColor="orange"
-                    activeText="LOCKED"
-                    inactiveText="UNLOCKED"
-                />
-                <StatusIndicator
-                    label="Door Sensor"
-                    isActive={status.door_closed}
-                    activeColor="green"
-                    inactiveColor="red"
-                    activeText="CLOSED"
-                    inactiveText="OPEN"
-                />
-                <StatusIndicator
-                    label="Alarm"
-                    isActive={status.alarm_triggered}
-                    activeColor="red"
-                    inactiveColor="gray"
-                    activeText="TRIGGERED"
-                    inactiveText="SAFE"
-                />
+                        {/* Online/Offline Indicator */}
+                        <div className={`${styles.onlineBadge} ${isOnline ? styles.online : styles.offline}`}>
+                            <span className={styles.dot}></span>
+                            {isOnline ? "Online" : "Offline"}
+                        </div>
+                    </div>
+
+                    <button onClick={() => signOut(auth)} className={styles.logoutButton}>
+                        Log Out
+                    </button>
+                </header>
+
+                {/* Status Grid Section */}
+                <div className={styles.statusGrid}>
+                    <StatusIndicator
+                        label="Lock Status"
+                        isActive={status.is_locked}
+                        color={status.is_locked ? "#4caf50" : "#ff9800"} // Green vs Orange
+                        activeText="LOCKED"
+                        inactiveText="UNLOCKED"
+                    />
+                    <StatusIndicator
+                        label="Door Sensor"
+                        isActive={status.door_closed}
+                        color={status.door_closed ? "#4caf50" : "#ef5350"} // Green vs Red
+                        activeText="CLOSED"
+                        inactiveText="OPEN"
+                    />
+                    <StatusIndicator
+                        label="Alarm System"
+                        isActive={status.alarm_triggered}
+                        color={status.alarm_triggered ? "#d32f2f" : "#9e9e9e"} // Red vs Grey
+                        activeText="TRIGGERED"
+                        inactiveText="SAFE"
+                    />
+                </div>
+
+                {/* Actions Section */}
+                <div className={styles.actionSection}>
+                    <h3 className={styles.actionTitle}>Remote Actions</h3>
+
+                    {isDoorOpen && (
+                        <div className={styles.warning}>
+                            ⚠️ Cannot lock while door is open
+                        </div>
+                    )}
+
+                    <br />
+
+                    <button
+                        onClick={toggleLock}
+                        disabled={isDoorOpen || !isOnline} // Also disable if offline
+                        className={`${styles.mainButton} ${control.set_lock ? styles.btnLocked : styles.btnUnlocked}`}
+                    >
+                        {!isOnline
+                            ? "DEVICE OFFLINE"
+                            : control.set_lock ? "UNLOCK DOOR" : "LOCK DOOR"
+                        }
+                    </button>
+                </div>
             </div>
-
-            <div style={{padding: "20px", border: "1px solid #ccc", borderRadius: "8px"}}>
-                <h3>Actions</h3>
-
-                {isDoorOpen && <p style={{color: "red"}}>⚠️ Cannot lock while door is open</p>}
-
-                <button
-                    onClick={toggleLock}
-                    disabled={isDoorOpen}
-                    style={{
-                        padding: "15px 30px",
-                        fontSize: "18px",
-                        cursor: isDoorOpen ? "not-allowed" : "pointer",
-                        backgroundColor: control.set_lock ? "#e74c3c" : "#2ecc71",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                        opacity: isDoorOpen ? 0.5 : 1
-                    }}
-                >
-                    {control.set_lock ? "UNLOCK DOOR" : "LOCK DOOR"}
-                </button>
-            </div>
-
         </div>
     )
-
 }
+
+// ---------------------------------------------------------
+// Sub-component for individual status cards
+// ---------------------------------------------------------
 
 interface StatusProps {
     label: string;
     isActive: boolean;
-    activeColor: string;
-    inactiveColor: string;
+    color: string;
     activeText: string;
     inactiveText: string;
 }
 
-function StatusIndicator({ label, isActive, activeColor, inactiveColor, activeText, inactiveText }: StatusProps) {
+function StatusIndicator({ label, isActive, color, activeText, inactiveText }: StatusProps) {
     return (
-        <div style={{ textAlign: "center" }}>
+        <div className={styles.statusCard}>
             <div
-                style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "50%",
-                    backgroundColor: isActive ? activeColor : inactiveColor,
-                    margin: "0 auto 10px auto",
-                    border: "2px solid #333"
-                }}
-            />
-            <strong>{label}</strong>
-            <br />
-            <span>{isActive ? activeText : inactiveText}</span>
+                className={styles.statusIcon}
+                style={{ backgroundColor: color }}
+            >
+                {/* Visual indicator (simple dot/circle) */}
+                <div style={{ width: "12px", height: "12px", background: "white", borderRadius: "50%" }}></div>
+            </div>
+            <span className={styles.statusLabel}>{label}</span>
+            <div className={styles.statusValue}>
+                {isActive ? activeText : inactiveText}
+            </div>
         </div>
     );
 }

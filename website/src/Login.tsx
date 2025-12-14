@@ -1,38 +1,74 @@
 import { useState } from "react";
-import {signInWithEmailAndPassword} from "firebase/auth";
-import { auth } from "./firebase.ts";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./firebase"; // Removed .ts extension for import usually
+import styles from "./Login.module.css";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    const handleLogin = async (e: any) => {
+    // Replace these strings with your actual details
+    const studentName = "Your Name Here";
+    const studentID = "12345678";
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(""); // Clear previous errors
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (error: any) {
-            setError(error.message);
+            // Clean up firebase error messages for UI
+            const cleanMessage = error.message.replace("Firebase: ", "").replace(" (auth/invalid-credential).", "");
+            setError("Login failed: " + cleanMessage);
         }
     }
-    
+
     return (
-        <div style={{ padding: "20px" }}>
-            <h2>Login</h2>
-            <form onSubmit={handleLogin}>
-                <label htmlFor="email">Email</label>
-                <input name="email" type="email" placeholder="myemail@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <div className={styles.container}>
+            <div className={styles.card}>
+                {/* Class Project Header */}
+                <div className={styles.projectInfo}>
+                    <h1 className={styles.projectName}>IoT Smart Home Security System with ESP32</h1>
+                    <p className={styles.courseInfo}>Embedded Systems 2</p>
+                    <p className={styles.studentInfo}>{studentName} | {studentID}</p>
+                </div>
 
-                <br/>
+                <h2 className={styles.title}>Access Dashboard</h2>
 
-                <label htmlFor="password">Password</label>
-                <input type="password" placeholder="12345" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <form onSubmit={handleLogin} className={styles.form}>
+                    <div>
+                        <label htmlFor="email" className={styles.label}>Email Address</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            className={styles.input}
+                            placeholder="admin@smarthome.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                <br/>
+                    <div>
+                        <label htmlFor="password" className={styles.label}>Password</label>
+                        <input
+                            id="password"
+                            type="password"
+                            className={styles.input}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                <button type="submit">Log In</button>
-            </form>
-            {error && <p style={{color: "red"}}> {error} </p> }
+                    <button type="submit" className={styles.button}>Log In</button>
+                </form>
+
+                {error && <div className={styles.error}>{error}</div>}
+            </div>
         </div>
     )
 }

@@ -1,0 +1,226 @@
+/* Dashboard.module.css */
+
+/* Reuse the main container style for consistency */
+.container {
+    min-height: 100vh;
+    background-color: #e3f2fd; /* Light Blue 50 */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+/* Main Dashboard Wrapper */
+.dashboardCard {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(33, 150, 243, 0.1);
+    border: 1px solid #bbdefb;
+    overflow: hidden;
+}
+
+/* Header Section */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background-color: #f1f8ff;
+    border-bottom: 1px solid #e1f5fe;
+}
+
+.titleGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    margin: 0;
+    color: #1565c0;
+    font-size: 1.5rem;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #78909c;
+    margin-top: 4px;
+}
+
+/* Logout Button */
+.logoutButton {
+    background-color: transparent;
+    color: #ef5350;
+    border: 1px solid #ffcdd2;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.logoutButton:hover {
+    background-color: #ffebee;
+    border-color: #ef5350;
+}
+
+/* Online Status Badge */
+.onlineBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 5px;
+    width: fit-content;
+}
+
+.online {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.offline {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+/* Status Grid */
+.statusGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+/* Individual Status Cards */
+.statusCard {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+
+.statusCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.statusIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 auto 1rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.statusLabel {
+    display: block;
+    font-size: 0.9rem;
+    color: #78909c;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statusValue {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #37474f;
+}
+
+/* Action Section */
+.actionSection {
+    padding: 2rem;
+    background-color: #fafafa;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.actionTitle {
+    margin-top: 0;
+    color: #455a64;
+    margin-bottom: 1.5rem;
+}
+
+.warning {
+    background-color: #fff3e0;
+    color: #e65100;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ffe0b2;
+    margin-bottom: 1rem;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+/* Big Action Button */
+.mainButton {
+    padding: 16px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    color: white;
+    min-width: 200px;
+}
+
+.mainButton:active {
+    transform: scale(0.98);
+}
+
+.mainButton:disabled {
+    background-color: #bdbdbd !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Button States */
+.btnLocked {
+    background-color: #ef5350; /* Red */
+}
+.btnLocked:hover {
+    background-color: #e53935;
+}
+
+.btnUnlocked {
+    background-color: #2196f3; /* Blue (instead of green, keeps theme consistent) */
+}
+.btnUnlocked:hover {
+    background-color: #1e88e5;
+}
+
+/* Loading / Error */
+.centerMessage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #546e7a;
+    background-color: #e3f2fd;
+    font-family: sans-serif;
+}
