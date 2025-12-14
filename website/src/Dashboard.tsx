@@ -3,6 +3,7 @@ import { ref, set } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
 import { auth, db } from "./firebase"; // Removed .ts
 import styles from "./Dashboard.module.css";
+import {useEffect} from "react";
 
 type DeviceControl = {
     set_lock: boolean;
@@ -21,6 +22,12 @@ type DeviceData = {
 }
 
 export default function Dashboard() {
+
+    useEffect(() => {
+        // This will run when the page loads
+        document.title = "Dashboard | Smart Home Door Lock";
+    }, []);
+
     // 1. Fetch data
     const [snapshot, loading, error] = useObject(ref(db, "device_001"));
 

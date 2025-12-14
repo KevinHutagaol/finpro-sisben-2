@@ -1,16 +1,21 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase"; // Removed .ts extension for import usually
 import styles from "./Login.module.css";
 
 export default function Login() {
+    useEffect(() => {
+        // This will run when the page loads
+        document.title = "Login | Smart Home Door Lock";
+    }, []);
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
     // Replace these strings with your actual details
-    const studentName = "Your Name Here";
-    const studentID = "12345678";
+    const studentName = "Kevin Imanuel Hutagaol";
+    const studentID = "2306156763";
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
