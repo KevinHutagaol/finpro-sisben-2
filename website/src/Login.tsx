@@ -5,7 +5,6 @@ import styles from "./Login.module.css";
 
 export default function Login() {
     useEffect(() => {
-        // This will run when the page loads
         document.title = "Login | Smart Home Door Lock";
     }, []);
 
@@ -13,17 +12,15 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    // Replace these strings with your actual details
     const studentName = "Kevin Imanuel Hutagaol";
     const studentID = "2306156763";
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(""); // Clear previous errors
+        setError("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (error: any) {
-            // Clean up firebase error messages for UI
             const cleanMessage = error.message.replace("Firebase: ", "").replace(" (auth/invalid-credential).", "");
             setError("Login failed: " + cleanMessage);
         }

@@ -29,8 +29,6 @@ export default function Dashboard() {
     useEffect(() => {
         document.title = "Dashboard | Smart Home";
 
-        // Calculate difference between Client PC time and Firebase Server time.
-        // This prevents false "Offline" errors if the user's PC clock is wrong.
         const offsetRef = ref(db, ".info/serverTimeOffset");
         const unsub = onValue(offsetRef, (snap) => {
             setServerOffset(snap.val() || 0);
@@ -39,43 +37,33 @@ export default function Dashboard() {
         return () => unsub();
     }, []);
 
-    // 1. Fetch data
     const [snapshot, loading, error] = useObject(ref(db, "device_001"));
 
-    // 2. Process Data safely
     const deviceData = snapshot?.val() as DeviceData | null;
 
-    // 3. HEARTBEAT CHECKER logic
     useEffect(() => {
-        // If we don't have data yet, we can't be online
         if (!deviceData?.timestamp) {
             setIsOnline(false);
             return;
         }
 
         const checkOnlineStatus = () => {
-            // 1. Get current PC time
             const clientTime = Date.now();
 
-            // 2. Adjust PC time to match Server time
             const estimatedServerTime = clientTime + serverOffset;
 
-            // 3. Compare with the timestamp saved by ESP32
             const lastHeartbeat = deviceData.timestamp;
             const diff = estimatedServerTime - lastHeartbeat;
 
-            // If heartbeat is older than 10 seconds, device is offline
             setIsOnline(diff < 10000);
         };
 
-        // Check immediately
         checkOnlineStatus();
 
-        // Check every 1 second
         const interval = setInterval(checkOnlineStatus, 1000);
 
         return () => clearInterval(interval);
-    }, [deviceData, serverOffset]); // Re-run if data updates OR if we refine our time offset
+    }, [deviceData, serverOffset]);
 
     if (loading) return <div className={styles.centerMessage}><h2>Connecting...</h2></div>;
     if (error) return <div className={styles.centerMessage}><h2>Error: {error.message}</h2></div>;
@@ -101,12 +89,10 @@ export default function Dashboard() {
         <div className={styles.container}>
             <div className={styles.dashboardCard}>
 
-                {/* Header Section */}
                 <header className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h2 className={styles.title}>Device Control: 001</h2>
 
-                        {/* Online/Offline Indicator */}
                         <div className={`${styles.onlineBadge} ${isOnline ? styles.online : styles.offline}`}>
                             <span className={styles.dot}></span>
                             {isOnline ? "Online" : "Offline"}
@@ -171,7 +157,6 @@ export default function Dashboard() {
     )
 }
 
-// Sub-component
 interface StatusProps {
     label: string;
     isActive: boolean;
