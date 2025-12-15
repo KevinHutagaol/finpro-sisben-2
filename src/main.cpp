@@ -20,9 +20,9 @@
 #define PIN_SERVO       26
 #define PIN_BUZZER      23
 
-#define LOCKED_ANGLE    0
-#define UNLOCKED_ANGLE  90
-#define BUZZER_CHANNEL  0
+#define LOCKED_ANGLE    90
+#define UNLOCKED_ANGLE  0
+#define BUZZER_CHANNEL  8
 #define WDT_TIMEOUT     30
 
 FirebaseData fbDO_stream;
@@ -89,6 +89,11 @@ void setup() {
     pinMode(PIN_RGB_GREEN, OUTPUT);
     pinMode(PIN_RGB_BLUE, OUTPUT);
     setRGB(false, false, false); // Off initially
+
+    // --- CHANGED: Attach servo logic here so it stays attached ---
+    lockServo.setPeriodHertz(50); // Standard 50hz servo
+    lockServo.attach(PIN_SERVO, 500, 2400); // Attach pin, min pulse, max pulse
+    // ------------------------------------------------------------
 
     ledcSetup(BUZZER_CHANNEL, 2000, 8);
     ledcAttachPin(PIN_BUZZER, BUZZER_CHANNEL);
@@ -238,13 +243,13 @@ void networkTask(void *pvParameters) {
     }
 }
 
-
+// --- CHANGED: Simplified function to keep servo engaged ---
 void moveServo(int angle) {
-    lockServo.attach(PIN_SERVO);
+    // We do not attach/detach here.
+    // The servo was attached in setup() and remains active to hold torque.
     lockServo.write(angle);
-    vTaskDelay(300 / portTICK_PERIOD_MS);
-    lockServo.detach();
 }
+// -----------------------------------------------------------
 
 void updateHardwareState() {
     bool localLocked, localAlarm;
