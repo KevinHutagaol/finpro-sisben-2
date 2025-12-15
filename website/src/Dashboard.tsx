@@ -1,11 +1,11 @@
 import { signOut } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { ref, set, onValue } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
 import { auth, db } from "./firebase";
 import styles from "./Dashboard.module.css";
 import { useEffect, useState } from "react";
 
-// Updated Types to include the timestamp
+// Types
 type DeviceControl = {
     set_lock: boolean;
 }
@@ -19,14 +19,24 @@ type DeviceStatus = {
 type DeviceData = {
     control: DeviceControl;
     status: DeviceStatus;
-    timestamp: number; // The heartbeat from ESP32
+    timestamp: number;
 }
 
 export default function Dashboard() {
     const [isOnline, setIsOnline] = useState(false);
+    const [serverOffset, setServerOffset] = useState(0); // Store the time difference
 
     useEffect(() => {
         document.title = "Dashboard | Smart Home";
+
+        // Calculate difference between Client PC time and Firebase Server time.
+        // This prevents false "Offline" errors if the user's PC clock is wrong.
+        const offsetRef = ref(db, ".info/serverTimeOffset");
+        const unsub = onValue(offsetRef, (snap) => {
+            setServerOffset(snap.val() || 0);
+        });
+
+        return () => unsub();
     }, []);
 
     // 1. Fetch data
@@ -37,29 +47,35 @@ export default function Dashboard() {
 
     // 3. HEARTBEAT CHECKER logic
     useEffect(() => {
+        // If we don't have data yet, we can't be online
         if (!deviceData?.timestamp) {
             setIsOnline(false);
             return;
         }
 
         const checkOnlineStatus = () => {
-            const now = Date.now();
+            // 1. Get current PC time
+            const clientTime = Date.now();
+
+            // 2. Adjust PC time to match Server time
+            const estimatedServerTime = clientTime + serverOffset;
+
+            // 3. Compare with the timestamp saved by ESP32
             const lastHeartbeat = deviceData.timestamp;
-            const diff = now - lastHeartbeat;
+            const diff = estimatedServerTime - lastHeartbeat;
 
             // If heartbeat is older than 10 seconds, device is offline
-            // (ESP32 updates every 3 seconds, so 10s is a safe buffer)
             setIsOnline(diff < 10000);
         };
 
         // Check immediately
         checkOnlineStatus();
 
-        // Check every 1 second locally to update UI if device dies
+        // Check every 1 second
         const interval = setInterval(checkOnlineStatus, 1000);
 
         return () => clearInterval(interval);
-    }, [deviceData]); // Re-run when data updates
+    }, [deviceData, serverOffset]); // Re-run if data updates OR if we refine our time offset
 
     if (loading) return <div className={styles.centerMessage}><h2>Connecting...</h2></div>;
     if (error) return <div className={styles.centerMessage}><h2>Error: {error.message}</h2></div>;
