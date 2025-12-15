@@ -1,10 +1,11 @@
 import { signOut } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
-import { auth, db } from "./firebase"; // Removed .ts
+import { auth, db } from "./firebase";
 import styles from "./Dashboard.module.css";
-import {useEffect} from "react";
+import { useEffect, useState } from "react";
 
+// Updated Types to include the timestamp
 type DeviceControl = {
     set_lock: boolean;
 }
@@ -18,30 +19,50 @@ type DeviceStatus = {
 type DeviceData = {
     control: DeviceControl;
     status: DeviceStatus;
-    online: boolean;
+    timestamp: number; // The heartbeat from ESP32
 }
 
 export default function Dashboard() {
+    const [isOnline, setIsOnline] = useState(false);
 
     useEffect(() => {
-        // This will run when the page loads
-        document.title = "Dashboard | Smart Home Door Lock";
+        document.title = "Dashboard | Smart Home";
     }, []);
 
     // 1. Fetch data
     const [snapshot, loading, error] = useObject(ref(db, "device_001"));
 
-    // 2. Handle Loading/Error
-    if (loading) {
-        return <div className={styles.centerMessage}><h2>Connecting to ESP32...</h2></div>
-    }
-
-    if (error) {
-        return <div className={styles.centerMessage}><h2>Error: {error.message}</h2></div>
-    }
-
-    // 3. Process Data safely
+    // 2. Process Data safely
     const deviceData = snapshot?.val() as DeviceData | null;
+
+    // 3. HEARTBEAT CHECKER logic
+    useEffect(() => {
+        if (!deviceData?.timestamp) {
+            setIsOnline(false);
+            return;
+        }
+
+        const checkOnlineStatus = () => {
+            const now = Date.now();
+            const lastHeartbeat = deviceData.timestamp;
+            const diff = now - lastHeartbeat;
+
+            // If heartbeat is older than 10 seconds, device is offline
+            // (ESP32 updates every 3 seconds, so 10s is a safe buffer)
+            setIsOnline(diff < 10000);
+        };
+
+        // Check immediately
+        checkOnlineStatus();
+
+        // Check every 1 second locally to update UI if device dies
+        const interval = setInterval(checkOnlineStatus, 1000);
+
+        return () => clearInterval(interval);
+    }, [deviceData]); // Re-run when data updates
+
+    if (loading) return <div className={styles.centerMessage}><h2>Connecting...</h2></div>;
+    if (error) return <div className={styles.centerMessage}><h2>Error: {error.message}</h2></div>;
 
     const status = deviceData?.status || {
         is_locked: false,
@@ -53,12 +74,8 @@ export default function Dashboard() {
         set_lock: false,
     };
 
-    // New: Handle Online Status (default to false if data missing)
-    const isOnline = deviceData?.online ?? false;
-
     const toggleLock = () => {
         set(ref(db, "device_001/control/set_lock"), !control.set_lock)
-            .then(() => {})
             .catch((err) => alert(err.message));
     }
 
@@ -85,32 +102,32 @@ export default function Dashboard() {
                     </button>
                 </header>
 
-                {/* Status Grid Section */}
+                {/* Status Grid */}
                 <div className={styles.statusGrid}>
                     <StatusIndicator
                         label="Lock Status"
                         isActive={status.is_locked}
-                        color={status.is_locked ? "#4caf50" : "#ff9800"} // Green vs Orange
+                        color={status.is_locked ? "#4caf50" : "#ff9800"}
                         activeText="LOCKED"
                         inactiveText="UNLOCKED"
                     />
                     <StatusIndicator
                         label="Door Sensor"
                         isActive={status.door_closed}
-                        color={status.door_closed ? "#4caf50" : "#ef5350"} // Green vs Red
+                        color={status.door_closed ? "#4caf50" : "#ef5350"}
                         activeText="CLOSED"
                         inactiveText="OPEN"
                     />
                     <StatusIndicator
                         label="Alarm System"
                         isActive={status.alarm_triggered}
-                        color={status.alarm_triggered ? "#d32f2f" : "#9e9e9e"} // Red vs Grey
+                        color={status.alarm_triggered ? "#d32f2f" : "#9e9e9e"}
                         activeText="TRIGGERED"
                         inactiveText="SAFE"
                     />
                 </div>
 
-                {/* Actions Section */}
+                {/* Actions */}
                 <div className={styles.actionSection}>
                     <h3 className={styles.actionTitle}>Remote Actions</h3>
 
@@ -124,7 +141,7 @@ export default function Dashboard() {
 
                     <button
                         onClick={toggleLock}
-                        disabled={isDoorOpen || !isOnline} // Also disable if offline
+                        disabled={isDoorOpen || !isOnline}
                         className={`${styles.mainButton} ${control.set_lock ? styles.btnLocked : styles.btnUnlocked}`}
                     >
                         {!isOnline
@@ -138,10 +155,7 @@ export default function Dashboard() {
     )
 }
 
-// ---------------------------------------------------------
-// Sub-component for individual status cards
-// ---------------------------------------------------------
-
+// Sub-component
 interface StatusProps {
     label: string;
     isActive: boolean;
@@ -157,7 +171,6 @@ function StatusIndicator({ label, isActive, color, activeText, inactiveText }: S
                 className={styles.statusIcon}
                 style={{ backgroundColor: color }}
             >
-                {/* Visual indicator (simple dot/circle) */}
                 <div style={{ width: "12px", height: "12px", background: "white", borderRadius: "50%" }}></div>
             </div>
             <span className={styles.statusLabel}>{label}</span>
