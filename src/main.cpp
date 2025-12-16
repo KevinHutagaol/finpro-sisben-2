@@ -92,7 +92,6 @@ void setup() {
 
     lockServo.setPeriodHertz(50);
     lockServo.attach(PIN_SERVO, 500, 2400);
-    // ------------------------------------------------------------
 
     ledcSetup(BUZZER_CHANNEL, 2000, 8);
     ledcAttachPin(PIN_BUZZER, BUZZER_CHANNEL);
@@ -181,7 +180,6 @@ void loop() {
 }
 
 void networkTask(void *pvParameters) {
-    // 1. Connect WiFi
     Serial.print("[Core 0] Connecting to WiFi");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while (WiFi.status() != WL_CONNECTED) {
@@ -212,11 +210,9 @@ void networkTask(void *pvParameters) {
     while(true) {
         if (Firebase.ready()) {
 
-            // Periodic Status Update (Every 3 seconds)
             if (millis() - lastUpload > 3000) {
                 lastUpload = millis();
 
-                // Read State safely
                 bool txLocked, txClosed, txAlarm;
                 if (xSemaphoreTake(stateMutex, portMAX_DELAY)) {
                     txLocked = currentState.isLocked;
