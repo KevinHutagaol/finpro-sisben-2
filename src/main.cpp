@@ -88,11 +88,10 @@ void setup() {
     pinMode(PIN_RGB_RED, OUTPUT);
     pinMode(PIN_RGB_GREEN, OUTPUT);
     pinMode(PIN_RGB_BLUE, OUTPUT);
-    setRGB(false, false, false); // Off initially
+    setRGB(false, false, false);
 
-    // --- CHANGED: Attach servo logic here so it stays attached ---
-    lockServo.setPeriodHertz(50); // Standard 50hz servo
-    lockServo.attach(PIN_SERVO, 500, 2400); // Attach pin, min pulse, max pulse
+    lockServo.setPeriodHertz(50);
+    lockServo.attach(PIN_SERVO, 500, 2400);
     // ------------------------------------------------------------
 
     ledcSetup(BUZZER_CHANNEL, 2000, 8);
@@ -142,13 +141,11 @@ void loop() {
 
     bool currentSwitchState = (digitalRead(PIN_LIMIT_SW) == LOW);
 
-    // Lock access for state update
     if (xSemaphoreTake(stateMutex, portMAX_DELAY)) {
         if (currentState.doorClosed != currentSwitchState) {
             currentState.doorClosed = currentSwitchState;
         }
 
-        // Manual Toggle Button
         if (digitalRead(PIN_BTN_TOGGLE) == LOW) {
             if (millis() - lastDebounceTime > 250) {
                 currentState.isLocked = !currentState.isLocked;
@@ -243,10 +240,7 @@ void networkTask(void *pvParameters) {
     }
 }
 
-// --- CHANGED: Simplified function to keep servo engaged ---
 void moveServo(int angle) {
-    // We do not attach/detach here.
-    // The servo was attached in setup() and remains active to hold torque.
     lockServo.write(angle);
 }
 // -----------------------------------------------------------
